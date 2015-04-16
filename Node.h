@@ -21,6 +21,10 @@ public:
     Node(const Node& orig);
     virtual ~Node();
     
+    inline float x(){return coords[0];};
+    inline float y(){return coords[1];};
+    inline float z(){return coords[2];};
+    
     void setCoords(float* in);
     inline int getNumber(){return num;};
 private:

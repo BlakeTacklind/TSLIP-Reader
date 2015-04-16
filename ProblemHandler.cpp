@@ -6,6 +6,7 @@
  */
 
 #include "ProblemHandler.h"
+#include <math.h>
 using namespace std;
 
 ProblemHandler::ProblemHandler() {
@@ -27,9 +28,9 @@ ProblemHandler ProblemHandler::readFile(char* input) {
   
   ProblemHandler p = ProblemHandler();
   
-  p.name = getSpecificLine(&file, string("NAME: "));
+  p.name = searchForSpecificLine(&file, string("NAME: "));
   
-  string line = getSpecificLine(&file, string("TYPE: "));
+  string line = searchForSpecificLine(&file, string("TYPE: "));
   if (line.find("TSP") != -1)
     p.ptype = TSP;
   else if (line.find("HCP") != -1)
@@ -37,14 +38,14 @@ ProblemHandler ProblemHandler::readFile(char* input) {
   else
     p.ptype = Other;
   
-  p.dimension = atoi(getSpecificLine(&file, string("DIMENSION: ")).c_str());
+  p.dimension = atoi(searchForSpecificLine(&file, string("DIMENSION: ")).c_str());
   p.nodes = (Node*)malloc(p.dimension * sizeof(Node));
   if(p.nodes == NULL){
     cout << "failed to malloc!" << endl;
     exit(-1);
   }
   
-  line = getSpecificLine(&file, string("EDGE_WEIGHT_TYPE: "));
+  line = searchForSpecificLine(&file, string("EDGE_WEIGHT_TYPE: "));
   if(line.find("EXPLICIT") != -1){
     p.etype = EXPLICIT;
     p.ctype = NO_COORDS;
@@ -94,7 +95,7 @@ ProblemHandler ProblemHandler::readFile(char* input) {
     exit(-1);
   }
   
-  getSpecificLine(&file, string("NODE_COORD_SECTION"));
+  searchForSpecificLine(&file, string("NODE_COORD_SECTION"));
   for (int i = 0; i < p.dimension; i++){
     getline(file, line);
     getNodeData(line, &p);
@@ -104,7 +105,7 @@ ProblemHandler ProblemHandler::readFile(char* input) {
   return p;
 }
 
-string ProblemHandler::getSpecificLine(ifstream* f, string line) {
+string ProblemHandler::searchForSpecificLine(ifstream* f, string line) {
   
   string l;
   int pos;
@@ -138,7 +139,6 @@ void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
   if (line != "") tokens.push_back(line);
   
   float coords[3];
-  
   
   if (p->ctype == TWOD_COORDS){
     Node n = Node(atoi(tokens.front().c_str()), p->ctype);
@@ -185,4 +185,52 @@ void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
     cout << "No coordinate type given!" << endl;
     exit(-1);
   }
+}
+
+static const float RRR = 6378.388;
+static const float PI = 3.1415926;
+
+float ProblemHandler::getDistance(int node1, int node2) {
+  if (node1 < 1 || node1 > dimension || node2 < 1 || node2 > dimension){
+    cout << "node not in range" << endl;
+    return 0;
+  }
+  
+  if (etype == ET_NONE){
+    cout << "edge type not set" << endl;
+    return 0;
+  }
+  
+  switch(etype){
+    case GEO:
+      int deg = int(nodes[node1].x());
+      float min = nodes[node1].x() - deg;
+      float lat1 = PI * (deg + 5 * min / 3) / 180;
+      deg = int(nodes[node1].y());
+      min = nodes[node1].y() - deg;
+      float lng1 = PI * (deg + 5 * min / 3) / 180;
+      deg = int(nodes[node2].x());
+      min = nodes[node2].x() - deg;
+      float lat2 = PI * (deg + 5 * min / 3) / 180;
+      deg = int(nodes[node2].y());
+      min = nodes[node2].y() - deg;
+      float lng2 = PI * (deg + 5 * min / 3) / 180;
+      float q1 = cos( lng1 - lng2 );
+      float q2 = cos( lat1 - lat2 );
+      float q3 = cos( lat1 + lat2 );
+      return ( RRR * acos( 0.5*((1.0+q1)*q2 - (1.0-q1)*q3) ) + 1.0);
+    default:
+      cout << "Distance measurement not implemented" << endl;
+      return 0;
+  }
+}
+
+float ProblemHandler::solveHCP() {
+  float dist = getDistance(1, dimension);
+  
+  for (int i = 1; i < dimension; i++){
+    dist += getDistance(i, i+1);
+  }
+  
+  return dist;
 }

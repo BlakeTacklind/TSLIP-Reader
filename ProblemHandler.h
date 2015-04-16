@@ -19,17 +19,17 @@ enum Problem{
 }; 
 
 enum Edge_Type{
-    EXPLICIT, EUC_2D, EUC_3D, MAX_2D, MAX_3D, MAN_2D, MAN_3D, CEIL_2D, GEO, 
-    ATT, XRAY1, XRAY2, SPECIAL
+    ET_NONE, EXPLICIT, EUC_2D, EUC_3D, MAX_2D, MAX_3D, MAN_2D, MAN_3D, CEIL_2D, 
+    GEO, ATT, XRAY1, XRAY2, SPECIAL
 };
 
 enum Edge_Weight_Format{
-    FUNCTION, FULL_MATRIX, UPPER_ROW, LOWER_ROW, UPPER_DIAG_ROW, LOWER_DIAG_ROW, 
-    UPPER_COL, LOWER_COL, UPPER_DIAG_COL, LOWER_DIAG_COL
+    EWF_NONE, FUNCTION, FULL_MATRIX, UPPER_ROW, LOWER_ROW, UPPER_DIAG_ROW, 
+    LOWER_DIAG_ROW, UPPER_COL, LOWER_COL, UPPER_DIAG_COL, LOWER_DIAG_COL
 };
 
 enum EDGE_DATA_FORMAT{
-    EDGE_LIST, ADJ_LIST
+    EDF_NONE, EDGE_LIST, ADJ_LIST
 };
 
 class ProblemHandler {
@@ -40,7 +40,12 @@ public:
     ProblemHandler(const ProblemHandler& orig);
     virtual ~ProblemHandler();
     
+    inline string getName(){return name;};
     inline Problem getProblemType(){return ptype;};
+    
+    float getDistance(int node1, int node2);
+    
+    float solveHCP();
     
 private:
     string name;
@@ -52,16 +57,9 @@ private:
     NODE_COORD_TYPE ctype;
     Node* nodes;
     
-    static string getSpecificLine (ifstream* f, string line);
+    static string searchForSpecificLine (ifstream* f, string line);
     static void getNodeData(string line, ProblemHandler* p);
 };
 
-class TSP : public ProblemHandler{
-    
-};
-
-class HCP : public ProblemHandler{
-    
-};
 #endif	/* PROBLEMHANDLER_H */
 

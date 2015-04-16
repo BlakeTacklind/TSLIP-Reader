@@ -28,16 +28,19 @@ int main(int argc, char** argv) {
   //switch to which form
   switch (p.getProblemType()){
     case TSP: 
-      cout << "TSP!" << endl;
+      cout << "This is a TSP problem" << endl;
       break;
     case HCP:
-      cout << "HCP!" << endl;
+      cout << "This is a HCP problem" << endl;
+      cout << "The Hamiltonian cycle distance of " << p.getName() << " is: " << p.solveHCP() << endl;
       break;
     case Other:
     default:
       printf("Unsupported Problem to Solve");
   }
   
+  
+  cout << "The Hamiltonian cycle distance of " << p.getName() << " is: " << p.solveHCP() << endl;
   
   return 0;
 }
