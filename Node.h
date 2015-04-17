@@ -15,6 +15,9 @@ enum NODE_COORD_TYPE{
     TWOD_COORDS, THREED_COORDS, NO_COORDS
 };
 
+/*
+ * container for the data of a node.
+ */
 class Node {
 public:
     Node(int number, NODE_COORD_TYPE type);

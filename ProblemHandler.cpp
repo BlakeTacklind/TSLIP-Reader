@@ -19,17 +19,25 @@ ProblemHandler::~ProblemHandler() {
   if (nodes != NULL) free(nodes);
 }
 
+/*
+ * This function reads the input file to get its data
+ */
 ProblemHandler ProblemHandler::readFile(char* input) {
   ifstream  file(input);
+  
+  //In case the file fails to open spits out error and ends program
   if (!file.is_open()){
     printf("failed to open file");
     exit(-1);
   }
   
+  //create a new problem
   ProblemHandler p = ProblemHandler();
   
+  //find name of problem
   p.name = searchForSpecificLine(&file, string("NAME: "));
   
+  //find type of problem
   string line = searchForSpecificLine(&file, string("TYPE: "));
   if (line.find("TSP") != -1)
     p.ptype = TSP;
@@ -38,6 +46,7 @@ ProblemHandler ProblemHandler::readFile(char* input) {
   else
     p.ptype = Other;
   
+  //get the dimensions of problem
   p.dimension = atoi(searchForSpecificLine(&file, string("DIMENSION: ")).c_str());
   p.nodes = (Node*)malloc(p.dimension * sizeof(Node));
   if(p.nodes == NULL){
@@ -45,6 +54,7 @@ ProblemHandler ProblemHandler::readFile(char* input) {
     exit(-1);
   }
   
+  //find edge weight type of problem
   line = searchForSpecificLine(&file, string("EDGE_WEIGHT_TYPE: "));
   if(line.find("EXPLICIT") != -1){
     p.etype = EXPLICIT;
@@ -95,16 +105,25 @@ ProblemHandler ProblemHandler::readFile(char* input) {
     exit(-1);
   }
   
+  //data section
+  
+  //find start of node data section
   searchForSpecificLine(&file, string("NODE_COORD_SECTION"));
+  //each of the next <dimension> lines are assumes to be node data
   for (int i = 0; i < p.dimension; i++){
     getline(file, line);
     getNodeData(line, &p);
   }
   
+  //file assumed fully read, returns object created
   file.close();
   return p;
 }
 
+/*
+ * This function searches from a point in a file to find the next occurrence 
+ * at the beginning of the line of the given string.
+ */
 string ProblemHandler::searchForSpecificLine(ifstream* f, string line) {
   
   string l;
@@ -116,8 +135,6 @@ string ProblemHandler::searchForSpecificLine(ifstream* f, string line) {
       exit(-1);
     }
     
-    //cout << l << endl;
-    
     if((pos = l.find(line)) != -1){
       return l.substr(pos + line.length());
     }
@@ -127,7 +144,13 @@ string ProblemHandler::searchForSpecificLine(ifstream* f, string line) {
   return NULL;
 }
 
+/*
+ * from a line of input data file, gets the node and coordinates of the node
+ * defined on that line
+ */
 void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
+  
+  //parses line into <space> delimited pieces
   int pos;
   string token;
   list<string> tokens;
@@ -187,9 +210,14 @@ void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
   }
 }
 
+
+//Constants for getDistance
 static const float RRR = 6378.388;
 static const float PI = 3.1415926;
-
+/*
+ * Gets the distances base on the distance measured type and the nodes of 
+ * two nodes referenced in the problem.
+ */
 float ProblemHandler::getDistance(int node1, int node2) {
   if (node1 < 1 || node1 > dimension || node2 < 1 || node2 > dimension){
     cout << "node not in range" << endl;
@@ -225,6 +253,10 @@ float ProblemHandler::getDistance(int node1, int node2) {
   }
 }
 
+/*
+ * calculates the Hamiltonian cycle distance
+ * sum of the distances from nodes 1->2, 2->3, ... , (n-1)->n, n->1
+ */
 float ProblemHandler::solveHCP() {
   float dist = getDistance(1, dimension);
   

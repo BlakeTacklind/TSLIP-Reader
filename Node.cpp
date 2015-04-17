@@ -19,6 +19,9 @@ Node::Node(const Node& orig) {
 Node::~Node() {
 }
 
+/*
+ * Sets the coordinates of this node.
+ */
 void Node::setCoords(float* in) {
   if (ctype == TWOD_COORDS){
     coords[0] = in[0];
