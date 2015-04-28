@@ -10,6 +10,12 @@
 using namespace std;
 
 ProblemHandler::ProblemHandler() {
+  ptype = NONE;
+  dimension = 0;
+  etype = ET_NONE;
+  ewtype = EWF_NONE;
+  edtype = EDF_NONE;
+  ctype = C_NONE;
 }
 
 ProblemHandler::ProblemHandler(const ProblemHandler& orig) {
@@ -34,6 +40,9 @@ ProblemHandler ProblemHandler::readFile(char* input) {
   //create a new problem
   ProblemHandler p = ProblemHandler();
   
+  getLineData(&file, &p);
+  //cout << p.name <<endl;
+  /*
   //find name of problem
   p.name = searchForSpecificLine(&file, string("NAME: "));
   
@@ -114,10 +123,128 @@ ProblemHandler ProblemHandler::readFile(char* input) {
     getline(file, line);
     getNodeData(line, &p);
   }
+  */
   
   //file assumed fully read, returns object created
   file.close();
   return p;
+}
+
+void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
+  string l;
+  string out;
+  while(getline(*f, l)){
+    
+    
+    if( !(out = getStringFromLine(l, "NAME: ")).empty() ){
+      p->name = out;
+      cout << "name: " << p->name << endl;
+    }
+    else if( !(out = getStringFromLine(l, "DIMENSION: ")).empty() ){
+      p->dimension = atoi(out.c_str());
+      cout << "dim: " << p->dimension << endl;
+      
+      p->nodes = (Node*)malloc(p->dimension * sizeof(Node));
+      if(p->nodes == NULL){
+        cout << "failed to malloc!" << endl;
+        exit(-1);
+      }
+    }
+    else if( !(out = getStringFromLine(l, "EDGE_WEIGHT_TYPE: ")).empty() ){
+      if(out.find("EXPLICIT") != -1){
+        p->etype = EXPLICIT;
+        p->ctype = NO_COORDS;
+      }
+      else if(out.find("EUC_2D") != -1){
+        p->etype = EUC_2D;
+        p->ctype = TWOD_COORDS;
+      }
+      else if(out.find("EUC_3D") != -1){
+        p->etype = EUC_3D;
+        p->ctype = THREED_COORDS;
+      }
+      else if(out.find("MAX_2D") != -1){
+        p->etype = MAX_2D;
+        p->ctype = TWOD_COORDS;
+      }
+      else if(out.find("MAX_3D") != -1){
+        p->etype = MAX_3D;
+        p->ctype = THREED_COORDS;
+      }
+      else if(out.find("MAN_2D") != -1){
+        p->etype = MAN_2D;
+        p->ctype = TWOD_COORDS;
+      }
+      else if(out.find("MAN_3D") != -1){
+        p->etype = MAN_3D;
+        p->ctype = THREED_COORDS;
+      }
+      else if(out.find("CEIL_2D") != -1){ 
+        p->etype = CEIL_2D;
+        p->ctype = TWOD_COORDS;
+      }
+      else if(out.find("GEO") != -1){
+        p->etype = GEO;
+        p->ctype = TWOD_COORDS;
+      }
+      else if(out.find("ATT") != -1)
+        p->etype = ATT;
+      else if(out.find("XRAY1") != -1)
+        p->etype = XRAY1;
+      else if(out.find("XRAY2") != -1)
+        p->etype = XRAY2;
+      else if(out.find("SPECIAL") != -1)
+        p->etype = SPECIAL;
+      else{
+        cout << "failed to get edge type" << endl;
+        exit(-1);
+      }
+      
+      cout << "Edge Type: " << p->etype << endl;
+      cout << "Coord Type: " << p->ctype << endl;
+    }
+    else if( l.find("NODE_COORD_SECTION") != -1){
+      if (p->dimension == 0){
+        cout << "node number not set!" << endl;
+        exit(-1);
+      }
+      
+      for (int i = 0; i < p->dimension; i++){
+        if (!getline(*f, out)){
+          cout << "End of file reached in coordinates" << endl;
+          exit(-1);
+        }
+        getNodeData(out, p);
+      }
+    }
+    else if( !(out = getStringFromLine(l, "TYPE: ")).empty() && (out = getStringFromLine(l, "_TYPE: ")).empty() ){
+      if (out.find("TSP") != -1)
+        p->ptype = TSP;
+      else if (out.find("HCP") != -1)
+        p->ptype = HCP;
+      else
+        p->ptype = Other;
+      
+      cout << "Problem Type: " << p->ptype << endl;
+    }
+    
+    if ( l.find("EOF") != -1){
+      
+      //cout << "End of File reached normally" << endl;
+      return;
+    }
+  }
+  
+  cout << "End of file reached before 'EOF' tag" << endl;
+  exit(-1);
+}
+
+string ProblemHandler::getStringFromLine(string line, string search) {
+  int pos;
+  if ( (pos = line.find(search)) == -1 )
+    return string("");
+  
+  return line.substr(pos + search.length());
 }
 
 /*
@@ -247,6 +374,8 @@ float ProblemHandler::getDistance(int node1, int node2) {
       float q2 = cos( lat1 - lat2 );
       float q3 = cos( lat1 + lat2 );
       return ( RRR * acos( 0.5*((1.0+q1)*q2 - (1.0-q1)*q3) ) + 1.0);
+    case EUC_2D:
+      return sqrt( pow((nodes[node1].x() - nodes[node2].x()),2) + pow((nodes[node1].y() - nodes[node2].y()),2) );
     default:
       cout << "Distance measurement not implemented" << endl;
       return 0;

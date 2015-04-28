@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
       break;
     case Other:
     default:
-      printf("Unsupported Problem to Solve");
+      cout << "Unsupported Problem to Solve" << endl;
   }
   
   

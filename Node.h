@@ -12,7 +12,7 @@
 using namespace std;
 
 enum NODE_COORD_TYPE{
-    TWOD_COORDS, THREED_COORDS, NO_COORDS
+    C_NONE, TWOD_COORDS, THREED_COORDS, NO_COORDS
 };
 
 /*

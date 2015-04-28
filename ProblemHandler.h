@@ -15,7 +15,7 @@
 using namespace std;
 
 enum Problem{
-  Other, TSP, HCP
+  NONE, Other, TSP, HCP
 }; 
 
 enum Edge_Type{
@@ -57,6 +57,8 @@ private:
     NODE_COORD_TYPE ctype;
     Node* nodes;
     
+    static void getLineData(ifstream* f, ProblemHandler* p);
+    static string getStringFromLine(string line, string search);
     static string searchForSpecificLine (ifstream* f, string line);
     static void getNodeData(string line, ProblemHandler* p);
 };
