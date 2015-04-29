@@ -34,7 +34,7 @@ enum EDGE_DATA_FORMAT{
 
 class ProblemHandler {
 public:
-    static ProblemHandler readFile(char* input);
+    static ProblemHandler readFile(const char* input, ProblemHandler* p);
     
     ProblemHandler();
     ProblemHandler(const ProblemHandler& orig);

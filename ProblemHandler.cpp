@@ -28,7 +28,7 @@ ProblemHandler::~ProblemHandler() {
 /*
  * This function reads the input file to get its data
  */
-ProblemHandler ProblemHandler::readFile(char* input) {
+ProblemHandler ProblemHandler::readFile(const char* input, ProblemHandler* p) {
   ifstream  file(input);
   
   //In case the file fails to open spits out error and ends program
@@ -38,9 +38,9 @@ ProblemHandler ProblemHandler::readFile(char* input) {
   }
   
   //create a new problem
-  ProblemHandler p = ProblemHandler();
+  *p = ProblemHandler();
   
-  getLineData(&file, &p);
+  getLineData(&file, p);
   //cout << p.name <<endl;
   /*
   //find name of problem
@@ -125,9 +125,11 @@ ProblemHandler ProblemHandler::readFile(char* input) {
   }
   */
   
+  //cout << "test 1" << endl;
   //file assumed fully read, returns object created
   file.close();
-  return p;
+  //cout << "test 2" << endl;
+  return *p;
 }
 
 void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
@@ -135,12 +137,13 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
   string out;
   while(getline(*f, l)){
     
+    cout << l << endl;
     
-    if( !(out = getStringFromLine(l, "NAME: ")).empty() ){
+    if( !(out = getStringFromLine(l, "NAME: ")).empty() || !(out = getStringFromLine(l, "NAME : ")).empty() ){
       p->name = out;
       cout << "name: " << p->name << endl;
     }
-    else if( !(out = getStringFromLine(l, "DIMENSION: ")).empty() ){
+    else if( !(out = getStringFromLine(l, "DIMENSION: ")).empty() || !(out = getStringFromLine(l, "DIMENSION : ")).empty()){
       p->dimension = atoi(out.c_str());
       cout << "dim: " << p->dimension << endl;
       
@@ -150,7 +153,7 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
         exit(-1);
       }
     }
-    else if( !(out = getStringFromLine(l, "EDGE_WEIGHT_TYPE: ")).empty() ){
+    else if( !(out = getStringFromLine(l, "EDGE_WEIGHT_TYPE: ")).empty() || !(out = getStringFromLine(l, "EDGE_WEIGHT_TYPE : ")).empty()){
       if(out.find("EXPLICIT") != -1){
         p->etype = EXPLICIT;
         p->ctype = NO_COORDS;
@@ -209,13 +212,20 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
         exit(-1);
       }
       
+      //cout << "Dimensions " << p->dimension << endl;
+      
+      cout << "reading node data..." << endl;
       for (int i = 0; i < p->dimension; i++){
         if (!getline(*f, out)){
           cout << "End of file reached in coordinates" << endl;
           exit(-1);
         }
+        
+        //cout << "On node " << i << " ";
+        
         getNodeData(out, p);
       }
+      cout<< "done nodes" << endl;
     }
     else if( !(out = getStringFromLine(l, "TYPE: ")).empty() && (out = getStringFromLine(l, "_TYPE: ")).empty() ){
       if (out.find("TSP") != -1)
@@ -230,7 +240,7 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
     
     if ( l.find("EOF") != -1){
       
-      //cout << "End of File reached normally" << endl;
+      cout << "End of File reached normally" << endl;
       return;
     }
   }
@@ -304,6 +314,7 @@ void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
       exit(-1);
     }
     p->nodes[n.getNumber()] = n;
+    cout << "got node " << n.getNumber() << endl;
   }
   else if(p->ctype == THREED_COORDS){
     Node n = Node(atoi(tokens.front().c_str()), p->ctype);
@@ -321,6 +332,7 @@ void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
       exit(-1);
     }
     p->nodes[n.getNumber()] = n;
+    cout << "got node " << n.getNumber() << endl;
   }
   else if(p->ctype == NO_COORDS){
     Node n = Node(atoi(tokens.front().c_str()), p->ctype);
@@ -330,11 +342,13 @@ void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
       exit(-1);
     }
     p->nodes[n.getNumber()] = n;
+    cout << "got node " << n.getNumber() << endl;
   }
   else{
     cout << "No coordinate type given!" << endl;
     exit(-1);
   }
+  
 }
 
 
