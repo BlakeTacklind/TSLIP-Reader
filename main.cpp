@@ -22,9 +22,8 @@ int main(int argc, char** argv) {
     exit(-1);
   }
   
-  ProblemHandler problems [200];
-  ProblemHandler p;
-  int i = 0;
+  struct answers list [200];
+  int numAnswers = 0;
   
   DIR *dir;
   struct dirent *ent;
@@ -32,11 +31,12 @@ int main(int argc, char** argv) {
   /* print all the files and directories within directory */
     while ((ent = readdir (dir)) != NULL) {
       if (string(ent->d_name).find(".tsp") != -1){
-        //problems[i++] = ProblemHandler::readFile((string(argv[1]).append(ent->d_name)).c_str());
+        
         string str = string(argv[1]).append("\\\\").append(ent->d_name);
-        cout << str << endl;
-        ProblemHandler::readFile(str.c_str(), &p);
-        //cout << "works?" << endl;
+        
+        //cout << ent->d_name << endl;
+        list[numAnswers++] = ProblemHandler::readFile(str.c_str());
+        
       }
     }
   closedir (dir);
@@ -45,29 +45,30 @@ int main(int argc, char** argv) {
     cout << "failed to open directory" << endl;
     exit(-1);
   }
-  //Check file and read to get general data
-  /*
-  */
   
-  //switch to which form
-  /*
-  switch (p.getProblemType()){
-    case TSP: 
-      cout << "This is a TSP problem" << endl;
-      break;
-    case HCP:
-      cout << "This is a HCP problem" << endl;
-      cout << "The Hamiltonian cycle distance of " << p.getName() << " is: " << p.solveHCP() << endl;
-      break;
-    case Other:
-    default:
-      cout << "Unsupported Problem to Solve" << endl;
+  ifstream opt("OptimalTours.txt");
+  
+  if(!opt.is_open()){
+    cout << "failed to open file" << endl;
+    return EXIT_FAILURE;
   }
-  */
   
-  //cout << "The Hamiltonian cycle distance of " << p.getName() << " is: " << p.solveHCP() << endl;
+  cout << "Printing Answers" << endl;
+  for(int j = 0 ; j < numAnswers; j++){
+    if (!list[j].empty){
+      cout << list[j].name << ", " << list[j].HCP << ", " << list[j].shortPath;
+      
+      string l;
+      int temp;
+      while(getline(opt, l) && list[j].name.find(l.substr(0, (temp=l.find(":")) - 1)) == -1 );
+      cout << ", " << l.substr(temp+2) << endl;
+      
+    }
+  }
   
-  //return EXIT_SUCCESS;
+  opt.close();
+  
+  return EXIT_SUCCESS;
 }
 
 

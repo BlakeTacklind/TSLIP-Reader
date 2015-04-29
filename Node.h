@@ -20,7 +20,7 @@ enum NODE_COORD_TYPE{
  */
 class Node {
 public:
-    Node(int number, NODE_COORD_TYPE type);
+    Node(int number);
     Node(const Node& orig);
     virtual ~Node();
     
@@ -28,12 +28,13 @@ public:
     inline float y(){return coords[1];};
     inline float z(){return coords[2];};
     
-    void setCoords(float* in);
+    inline void setX(float x){coords[0] = x;};
+    inline void setY(float y){coords[1] = y;};
+    inline void setZ(float z){coords[2] = z;};
     inline int getNumber(){return num;};
 private:
     int num;
     float coords[3];
-    NODE_COORD_TYPE ctype;
     //list<Node> Adjacent;
 };
 

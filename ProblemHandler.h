@@ -14,6 +14,13 @@
 #include "Node.h"
 using namespace std;
 
+struct answers{
+    bool empty;
+    float HCP;
+    float shortPath;
+    string name;
+};
+
 enum Problem{
   NONE, Other, TSP, HCP
 }; 
@@ -34,7 +41,8 @@ enum EDGE_DATA_FORMAT{
 
 class ProblemHandler {
 public:
-    static ProblemHandler readFile(const char* input, ProblemHandler* p);
+    static struct answers readFile(const char* input);
+    static struct answers empty(string name);
     
     ProblemHandler();
     ProblemHandler(const ProblemHandler& orig);
@@ -46,6 +54,8 @@ public:
     float getDistance(int node1, int node2);
     
     float solveHCP();
+    float solveNearestNeighborCycle();
+    void distanceList();
     
 private:
     string name;

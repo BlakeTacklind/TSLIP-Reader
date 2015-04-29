@@ -7,6 +7,7 @@
 
 #include "ProblemHandler.h"
 #include <math.h>
+#include <float.h>
 using namespace std;
 
 ProblemHandler::ProblemHandler() {
@@ -28,7 +29,7 @@ ProblemHandler::~ProblemHandler() {
 /*
  * This function reads the input file to get its data
  */
-ProblemHandler ProblemHandler::readFile(const char* input, ProblemHandler* p) {
+struct answers ProblemHandler::readFile(const char* input) {
   ifstream  file(input);
   
   //In case the file fails to open spits out error and ends program
@@ -38,98 +39,37 @@ ProblemHandler ProblemHandler::readFile(const char* input, ProblemHandler* p) {
   }
   
   //create a new problem
-  *p = ProblemHandler();
+  ProblemHandler p = ProblemHandler();
   
-  getLineData(&file, p);
-  //cout << p.name <<endl;
-  /*
-  //find name of problem
-  p.name = searchForSpecificLine(&file, string("NAME: "));
+  getLineData(&file, &p);
   
-  //find type of problem
-  string line = searchForSpecificLine(&file, string("TYPE: "));
-  if (line.find("TSP") != -1)
-    p.ptype = TSP;
-  else if (line.find("HCP") != -1)
-    p.ptype = HCP;
-  else
-    p.ptype = Other;
-  
-  //get the dimensions of problem
-  p.dimension = atoi(searchForSpecificLine(&file, string("DIMENSION: ")).c_str());
-  p.nodes = (Node*)malloc(p.dimension * sizeof(Node));
-  if(p.nodes == NULL){
-    cout << "failed to malloc!" << endl;
-    exit(-1);
-  }
-  
-  //find edge weight type of problem
-  line = searchForSpecificLine(&file, string("EDGE_WEIGHT_TYPE: "));
-  if(line.find("EXPLICIT") != -1){
-    p.etype = EXPLICIT;
-    p.ctype = NO_COORDS;
-  }
-  else if(line.find("EUC_2D") != -1){
-    p.etype = EUC_2D;
-    p.ctype = TWOD_COORDS;
-  }
-  else if(line.find("EUC_3D") != -1){
-    p.etype = EUC_3D;
-    p.ctype = THREED_COORDS;
-  }
-  else if(line.find("MAX_2D") != -1){
-    p.etype = MAX_2D;
-    p.ctype = TWOD_COORDS;
-  }
-  else if(line.find("MAX_3D") != -1){
-    p.etype = MAX_3D;
-    p.ctype = THREED_COORDS;
-  }
-  else if(line.find("MAN_2D") != -1){
-    p.etype = MAN_2D;
-    p.ctype = TWOD_COORDS;
-  }
-  else if(line.find("MAN_3D") != -1){
-    p.etype = MAN_3D;
-    p.ctype = THREED_COORDS;
-  }
-  else if(line.find("CEIL_2D") != -1){ 
-    p.etype = CEIL_2D;
-    p.ctype = TWOD_COORDS;
-  }
-  else if(line.find("GEO") != -1){
-    p.etype = GEO;
-    p.ctype = TWOD_COORDS;
-  }
-  else if(line.find("ATT") != -1)
-    p.etype = ATT;
-  else if(line.find("XRAY1") != -1)
-    p.etype = XRAY1;
-  else if(line.find("XRAY2") != -1)
-    p.etype = XRAY2;
-  else if(line.find("SPECIAL") != -1)
-    p.etype = SPECIAL;
-  else{
-    cout << "failed to get edge type" << endl;
-    exit(-1);
-  }
-  
-  //data section
-  
-  //find start of node data section
-  searchForSpecificLine(&file, string("NODE_COORD_SECTION"));
-  //each of the next <dimension> lines are assumes to be node data
-  for (int i = 0; i < p.dimension; i++){
-    getline(file, line);
-    getNodeData(line, &p);
-  }
-  */
-  
-  //cout << "test 1" << endl;
   //file assumed fully read, returns object created
   file.close();
-  //cout << "test 2" << endl;
-  return *p;
+  
+  if (p.etype != EUC_2D && p.etype != GEO)
+    return empty(p.name);
+  
+  if (p.name.find("burma14") != -1)
+    p.distanceList();
+  
+  struct answers a;
+  a.empty = false;
+  a.HCP = p.solveHCP();
+  a.shortPath = p.solveNearestNeighborCycle();
+  a.name = p.getName();
+  
+  //cout << a.HCP << ", " << a.shortPath << endl;
+  
+  return a;
+}
+
+answers ProblemHandler::empty(string name) {
+  struct answers a;
+  a.empty = true;
+  a.HCP = 0;
+  a.shortPath = 0;
+  a.name = name;
+  return a;
 }
 
 void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
@@ -137,20 +77,20 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
   string out;
   while(getline(*f, l)){
     
-    cout << l << endl;
+    //cout << l << endl;
     
     if( !(out = getStringFromLine(l, "NAME: ")).empty() || !(out = getStringFromLine(l, "NAME : ")).empty() ){
       p->name = out;
-      cout << "name: " << p->name << endl;
+      //cout << "name: " << p->name << endl;
     }
     else if( !(out = getStringFromLine(l, "DIMENSION: ")).empty() || !(out = getStringFromLine(l, "DIMENSION : ")).empty()){
       p->dimension = atoi(out.c_str());
-      cout << "dim: " << p->dimension << endl;
+      //cout << "dim: " << p->dimension << " size " << p->dimension * sizeof(Node) << endl;
       
-      p->nodes = (Node*)malloc(p->dimension * sizeof(Node));
+      p->nodes = (Node*)malloc(p->dimension * sizeof(Node) + sizeof(Node));
       if(p->nodes == NULL){
         cout << "failed to malloc!" << endl;
-        exit(-1);
+        exit(1);
       }
     }
     else if( !(out = getStringFromLine(l, "EDGE_WEIGHT_TYPE: ")).empty() || !(out = getStringFromLine(l, "EDGE_WEIGHT_TYPE : ")).empty()){
@@ -190,8 +130,10 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
         p->etype = GEO;
         p->ctype = TWOD_COORDS;
       }
-      else if(out.find("ATT") != -1)
+      else if(out.find("ATT") != -1){
         p->etype = ATT;
+        p->ctype = TWOD_COORDS;
+      }
       else if(out.find("XRAY1") != -1)
         p->etype = XRAY1;
       else if(out.find("XRAY2") != -1)
@@ -203,8 +145,8 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
         exit(-1);
       }
       
-      cout << "Edge Type: " << p->etype << endl;
-      cout << "Coord Type: " << p->ctype << endl;
+      //cout << "Edge Type: " << p->etype << endl;
+      //cout << "Coord Type: " << p->ctype << endl;
     }
     else if( l.find("NODE_COORD_SECTION") != -1){
       if (p->dimension == 0){
@@ -214,7 +156,7 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
       
       //cout << "Dimensions " << p->dimension << endl;
       
-      cout << "reading node data..." << endl;
+      //cout << "reading node data..." << endl;
       for (int i = 0; i < p->dimension; i++){
         if (!getline(*f, out)){
           cout << "End of file reached in coordinates" << endl;
@@ -225,7 +167,7 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
         
         getNodeData(out, p);
       }
-      cout<< "done nodes" << endl;
+      //cout<< "done nodes" << endl;
     }
     else if( !(out = getStringFromLine(l, "TYPE: ")).empty() && (out = getStringFromLine(l, "_TYPE: ")).empty() ){
       if (out.find("TSP") != -1)
@@ -235,18 +177,18 @@ void ProblemHandler::getLineData(ifstream* f, ProblemHandler* p) {
       else
         p->ptype = Other;
       
-      cout << "Problem Type: " << p->ptype << endl;
+      //cout << "Problem Type: " << p->ptype << endl;
     }
     
     if ( l.find("EOF") != -1){
       
-      cout << "End of File reached normally" << endl;
+      //cout << "End of File reached normally" << endl;
       return;
     }
   }
   
-  cout << "End of file reached before 'EOF' tag" << endl;
-  exit(-1);
+  //cout << "Minor Error: End of file reached before 'EOF' tag" << endl;
+  return;
 }
 
 string ProblemHandler::getStringFromLine(string line, string search) {
@@ -298,51 +240,47 @@ void ProblemHandler::getNodeData(string line, ProblemHandler* p) {
   }
   if (line != "") tokens.push_back(line);
   
-  float coords[3];
-  
   if (p->ctype == TWOD_COORDS){
-    Node n = Node(atoi(tokens.front().c_str()), p->ctype);
+    Node n = Node(atoi(tokens.front().c_str()));
 
     tokens.pop_front();
-    coords[0] = atof(tokens.front().c_str());
+    n.setX(atof(tokens.front().c_str()));
     tokens.pop_front();
-    coords[1] = atof(tokens.front().c_str());
-    n.setCoords(coords);
+    n.setY(atof(tokens.front().c_str()));
 
     if(n.getNumber() > p->dimension || n.getNumber() < 1){
       cout << "Given node number out of range" <<endl;
       exit(-1);
     }
     p->nodes[n.getNumber()] = n;
-    cout << "got node " << n.getNumber() << endl;
+    //cout << "got node " << n.getNumber() << " X: " << n.x() << endl;
   }
   else if(p->ctype == THREED_COORDS){
-    Node n = Node(atoi(tokens.front().c_str()), p->ctype);
+    Node n = Node(atoi(tokens.front().c_str()));
 
     tokens.pop_front();
-    coords[0] = atof(tokens.front().c_str());
+    n.setX(atof(tokens.front().c_str()));
     tokens.pop_front();
-    coords[1] = atof(tokens.front().c_str());
+    n.setY(atof(tokens.front().c_str()));
     tokens.pop_front();
-    coords[2] = atof(tokens.front().c_str());
-    n.setCoords(coords);
+    n.setZ(atof(tokens.front().c_str()));
 
     if(n.getNumber() > p->dimension || n.getNumber() < 1){
       cout << "Given node number out of range" <<endl;
       exit(-1);
     }
     p->nodes[n.getNumber()] = n;
-    cout << "got node " << n.getNumber() << endl;
+    //cout << "got node " << n.getNumber() << endl;
   }
   else if(p->ctype == NO_COORDS){
-    Node n = Node(atoi(tokens.front().c_str()), p->ctype);
+    Node n = Node(atoi(tokens.front().c_str()));
 
     if(n.getNumber() > p->dimension || n.getNumber() < 1){
       cout << "Given node number out of range" <<endl;
       exit(-1);
     }
     p->nodes[n.getNumber()] = n;
-    cout << "got node " << n.getNumber() << endl;
+    //cout << "got node " << n.getNumber() << endl;
   }
   else{
     cout << "No coordinate type given!" << endl;
@@ -361,7 +299,7 @@ static const float PI = 3.1415926;
  */
 float ProblemHandler::getDistance(int node1, int node2) {
   if (node1 < 1 || node1 > dimension || node2 < 1 || node2 > dimension){
-    cout << "node not in range" << endl;
+    cout << "node not in range " << node1 << " " << node2 << endl;
     return 0;
   }
   
@@ -408,4 +346,57 @@ float ProblemHandler::solveHCP() {
   }
   
   return dist;
+}
+
+float ProblemHandler::solveNearestNeighborCycle() {
+  float dist = 0;
+  bool used [dimension + 1];
+  
+  for (int i = 0; i <= dimension ; i++)
+    used[i] = false;
+  
+  used[1] = true;
+  int onNode = 1;
+  
+  //cout << name << " nearest neighbor tour: 1 ";
+  
+  for(int i = 1; i < dimension; i++){
+    float smallest = FLT_MAX;
+    int NxtNode = 0;
+    for(int j = 1; j <= dimension; j++){
+      float temp;
+      if(!used[j]){
+        if(NxtNode == 0 || (temp = getDistance(onNode, j)) < smallest){
+          smallest = temp;
+          NxtNode = j;
+        }
+      }
+    }
+    
+    //cout << NxtNode << " ";
+    used[NxtNode] = true;
+    onNode = NxtNode;
+    dist += smallest;
+  }
+  
+  dist += getDistance(1, onNode);
+  //cout << "1" << endl;
+  
+  return dist;
+}
+
+void ProblemHandler::distanceList() {
+  ofstream out;
+  
+  out.open(name.append(".txt").c_str());
+  
+  out << dimension << endl;
+  
+  for(int i = 1; i <= dimension; i++){
+    for(int j = i+1; j <= dimension; j++){
+      out << i << " " << j << " " << getDistance(i, j) << endl;
+    }
+  }
+  
+  out.close();
 }
