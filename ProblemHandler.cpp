@@ -387,8 +387,9 @@ float ProblemHandler::solveNearestNeighborCycle() {
 
 void ProblemHandler::distanceList() {
   ofstream out;
+  string fileName = name;
   
-  out.open(name.append(".txt").c_str());
+  out.open(fileName.append(".txt").c_str());
   
   out << dimension << endl;
   

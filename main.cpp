@@ -46,12 +46,6 @@ int main(int argc, char** argv) {
     exit(-1);
   }
   
-  ifstream opt("OptimalTours.txt");
-  
-  if(!opt.is_open()){
-    cout << "failed to open file" << endl;
-    return EXIT_FAILURE;
-  }
   
   cout << "Printing Answers" << endl;
   for(int j = 0 ; j < numAnswers; j++){
@@ -60,13 +54,18 @@ int main(int argc, char** argv) {
       
       string l;
       int temp;
+      ifstream opt("OptimalTours.txt");
+
+      if(!opt.is_open()){
+        cout << "failed to open file" << endl;
+      }
       while(getline(opt, l) && list[j].name.find(l.substr(0, (temp=l.find(":")) - 1)) == -1 );
       cout << ", " << l.substr(temp+2) << endl;
       
+      opt.close();
     }
   }
   
-  opt.close();
   
   return EXIT_SUCCESS;
 }
